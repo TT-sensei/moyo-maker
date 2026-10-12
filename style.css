@@ -42,3 +42,6 @@ main{display:block;max-width:1500px;padding:10px clamp(8px,1.5vw,18px)}
  .canvas-footer span:last-child{display:none}
 }
 @media(prefers-reduced-motion:reduce){.left,.right{transition:none}}
+
+/* 複数選択とマイ模様 */
+.motif-library{display:grid;gap:6px;margin-top:10px}.motif-row{display:flex;gap:6px;align-items:stretch}.motif-row .motif-load{flex:1;text-align:left;overflow-wrap:anywhere}.motif-row .motif-delete{min-width:44px;font-size:20px;color:#8b3d35}.motif-library:empty{display:none}button:disabled{opacity:.45;cursor:not-allowed}
