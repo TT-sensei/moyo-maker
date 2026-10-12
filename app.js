@@ -14,49 +14,30 @@ const defs=[
 {id:'star',name:'星',path:'M0 -40L10 -13L38 -13L16 4L24 32L0 16L-24 32L-16 4L-38 -13L-10 -13Z'},
 {id:'heart',name:'ハート',path:'M0 31C-8 22 -36 3 -34 -14C-32 -35 -7 -35 0 -17C8 -35 32 -35 34 -14C36 3 8 22 0 31Z'}
 ];
-const characters=[
-{id:'nav-star',name:'ほしぼうし',kind:'character',style:'star'},
-{id:'nav-cat',name:'ねこみみ',kind:'character',style:'cat'},
-{id:'nav-cape',name:'マント',kind:'character',style:'cape'},
-{id:'nav-bow',name:'リボン',kind:'character',style:'bow'}
-];
 const colors=['#e76f51','#f4a261','#e9c46a','#8ab17d','#2a9d8f','#4d91bd','#5969a8','#8c6bb1','#d979a5','#55463f','#202d35','#ffffff'];
-let objects=[],selected=null,currentColor=colors[0],gridOn=true,history=[],future=[],drag=null,toastTimer;
+let objects=[],selected=null,currentColor=colors[0],gridOn=true,snapOn=false,history=[],future=[],drag=null,toastTimer;
 const $=id=>document.getElementById(id),canvas=$('canvas');
 function say(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1800)}
 function snap(){history.push(JSON.stringify({objects,selected,gridOn}));if(history.length>60)history.shift();future=[]}
 function restore(s){const d=JSON.parse(s);objects=d.objects;selected=d.selected;gridOn=d.gridOn;render()}
 function makeSvgShape(d,fill){
- if(d.kind==='character')return makeCharacter(d,fill);
  const s=document.createElementNS(NS,d.circle?'circle':'path');
  if(d.circle){s.setAttribute('r','31')}else{s.setAttribute('d',d.path)}
  s.setAttribute('fill',fill);s.setAttribute('stroke','#263238');s.setAttribute('stroke-opacity','.22');s.setAttribute('stroke-width','1.5');return s
 }
-function makeCharacter(d,fill){
- const g=document.createElementNS(NS,'g');
- const part=(tag,attrs,color=fill)=>{const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));n.setAttribute('fill',color);n.setAttribute('stroke','#263238');n.setAttribute('stroke-opacity','.22');n.setAttribute('stroke-width','1.4');g.append(n);return n};
- part('path',{d:'M-29 37Q-27 8 -14 6L-14 -1L14 -1L14 6Q27 8 29 37Z'});
- part('circle',{cx:0,cy:-14,r:19});
- if(d.style==='star')part('path',{d:'M-23 -24L-17 -39L-6 -29L0 -43L7 -29L19 -38L22 -22Z'});
- if(d.style==='cat')part('path',{d:'M-22 -22L-25 -42L-8 -30L8 -30L25 -42L22 -22Z'});
- if(d.style==='cape')part('path',{d:'M-18 5L-32 30L-25 39L0 28L25 39L32 30L18 5Z'});
- if(d.style==='bow'){part('path',{d:'M-7 -34Q-23 -47 -24 -31Q-23 -20 -7 -27Z'});part('path',{d:'M7 -34Q23 -47 24 -31Q23 -20 7 -27Z'});part('circle',{cx:0,cy:-31,r:4})}
- part('circle',{cx:-7,cy:-15,r:2.2},'#263238');part('circle',{cx:7,cy:-15,r:2.2},'#263238');
- part('path',{d:'M-4 -7Q0 -3 4 -7',fill:'none',stroke:'#263238','stroke-width':1.5},'none');
- return g
-}
 function drawShapeIcon(d){const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox','-50 -50 100 100');s.appendChild(makeSvgShape(d,'#78b8aa'));return s}
 defs.forEach(d=>{const b=document.createElement('button');b.className='shape-btn';b.type='button';b.append(drawShapeIcon(d));const span=document.createElement('span');span.textContent=d.name;b.append(span);b.addEventListener('click',()=>addShape(d.id));$('shapeGrid').append(b)});
-characters.forEach(d=>{const b=document.createElement('button');b.className='shape-btn';b.type='button';b.append(drawShapeIcon(d));const span=document.createElement('span');span.textContent=d.name;b.append(span);b.addEventListener('click',()=>addShape(d.id));$('characterGrid').append(b)});
 colors.forEach((c,i)=>{const b=document.createElement('button');b.className='swatch'+(i===0?' active':'');b.style.background=c;b.setAttribute('aria-label','色 '+(i+1));b.addEventListener('click',()=>{currentColor=c;document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));b.classList.add('active');const o=chosen();if(o&&!o.locked){snap();o.fill=c;render()}else if(o&&o.locked){say('ロック中だよ。解除してから色を変えてね')}});$('swatches').append(b)});
-function addShape(id,x=300,y=300){snap();const o={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),shape:id,x,y,scale:1,angle:0,fill:currentColor,locked:false};objects.push(o);selected=o.id;render()}
+function snapCoord(n){return snapOn?Math.max(0,Math.min(600,Math.round(n/30)*30)):n}
+function addShape(id,x=300,y=300){x=snapCoord(x);y=snapCoord(y);snap();const o={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),shape:id,x,y,scale:1,angle:0,fill:currentColor,locked:false};objects.push(o);selected=o.id;render()}
 function chosen(){return objects.find(o=>o.id===selected)}
-function render(){canvas.querySelectorAll('.obj,.selection').forEach(n=>n.remove());objects.forEach(o=>{const d=[...defs,...characters].find(s=>s.id===o.shape);const g=document.createElementNS(NS,'g');g.classList.add('obj');if(o.locked)g.classList.add('locked');g.dataset.id=o.id;g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${o.angle}) scale(${o.scale})`);g.appendChild(makeSvgShape(d,o.fill));if(o.id===selected){const ring=document.createElementNS(NS,'circle');ring.setAttribute('r',String(d.kind==='character'?47:(d.circle?35:49)));ring.setAttribute('fill','none');ring.setAttribute('stroke',o.locked?'#b7791f':'#246c68');ring.setAttribute('stroke-width',String(2/o.scale));ring.setAttribute('stroke-dasharray','4 4');ring.classList.add('selection');g.append(ring);if(o.locked){const lock=document.createElementNS(NS,'text');lock.setAttribute('x','35');lock.setAttribute('y','-35');lock.setAttribute('font-size','19');lock.setAttribute('text-anchor','middle');lock.setAttribute('fill','#8a5a12');lock.textContent='🔒';lock.classList.add('selection');g.append(lock)}}canvas.append(g)});canvas.classList.toggle('grid-bg',gridOn);$('gridBtn').classList.toggle('active',gridOn);$('whiteBtn').classList.toggle('active',!gridOn);$('count').textContent='図形 '+objects.length+'こ';$('empty').classList.toggle('hidden',objects.length>0);const o=chosen();['rotL','rotR','smaller','larger','duplicateBtn','deleteBtn','front','back','radial','repeat','mirror','size','angle'].forEach(id=>$(id).disabled=!o||o.locked);$('lockBtn').disabled=!o;$('lockBtn').textContent=o?(o.locked?'🔓 ロックを解除':'🔒 ロックする'):'🔒 ロックする';$('lockBtn').classList.toggle('active',!!o?.locked);$('size').value=o?Math.round(o.scale*100):100;$('sizeText').textContent=o?Math.round(o.scale*100)+'%':'—';$('angle').value=o?((o.angle%360)+360)%360:0;$('angleText').textContent=o?o.angle+'°':'—';}
+function render(){canvas.querySelectorAll('.obj,.selection').forEach(n=>n.remove());objects.forEach(o=>{const d=defs.find(s=>s.id===o.shape);const g=document.createElementNS(NS,'g');g.classList.add('obj');if(o.locked)g.classList.add('locked');g.dataset.id=o.id;g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${o.angle}) scale(${o.scale})`);g.appendChild(makeSvgShape(d,o.fill));if(o.id===selected){const ring=document.createElementNS(NS,'circle');ring.setAttribute('r',String(d.circle?35:49));ring.setAttribute('fill','none');ring.setAttribute('stroke',o.locked?'#b7791f':'#246c68');ring.setAttribute('stroke-width',String(2/o.scale));ring.setAttribute('stroke-dasharray','4 4');ring.classList.add('selection');g.append(ring);if(o.locked){const lock=document.createElementNS(NS,'text');lock.setAttribute('x','35');lock.setAttribute('y','-35');lock.setAttribute('font-size','19');lock.setAttribute('text-anchor','middle');lock.setAttribute('fill','#8a5a12');lock.textContent='🔒';lock.classList.add('selection');g.append(lock)}}canvas.append(g)});canvas.classList.toggle('grid-bg',gridOn);$('gridBtn').classList.toggle('active',gridOn);$('whiteBtn').classList.toggle('active',!gridOn);$('count').textContent='図形 '+objects.length+'こ';$('empty').classList.toggle('hidden',objects.length>0);$('snapBtn').classList.toggle('active',snapOn);$('snapBtn').textContent='ぴたっと '+(snapOn?'ON':'OFF');$('snapBtn').setAttribute('aria-pressed',String(snapOn));const o=chosen();['rotL','rotR','smaller','larger','duplicateBtn','deleteBtn','front','back','radial','repeat','mirror','tile','size','angle'].forEach(id=>$(id).disabled=!o||o.locked);$('lockBtn').disabled=!o;$('lockBtn').textContent=o?(o.locked?'🔓 ロックを解除':'🔒 ロックする'):'🔒 ロックする';$('lockBtn').classList.toggle('active',!!o?.locked);$('size').value=o?Math.round(o.scale*100):100;$('sizeText').textContent=o?Math.round(o.scale*100)+'%':'—';$('angle').value=o?((o.angle%360)+360)%360:0;$('angleText').textContent=o?o.angle+'°':'—';}
 function change(fn){const o=chosen();if(!o||o.locked){if(o?.locked)say('ロック中だよ。解除してから編集してね');return}snap();fn(o);render()}
 $('lockBtn').onclick=()=>{const o=chosen();if(!o)return;snap();o.locked=!o.locked;render();say(o.locked?'ロックしたよ':'ロックを解除したよ')};
+$('snapBtn').onclick=()=>{snapOn=!snapOn;if(snapOn){objects.forEach(o=>{o.x=snapCoord(o.x);o.y=snapCoord(o.y)});say('30ピクセルごとにぴたっと配置するよ')}else say('自由に配置できるよ');render()};
 function pointerPos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*600/r.width,y:(e.clientY-r.top)*600/r.height}}
 canvas.addEventListener('pointerdown',e=>{const target=e.target.closest('.obj');if(target){const id=target.dataset.id;if(id!==selected){selected=id;render()}const o=chosen();if(o?.locked){say('ロック中だよ。解除すると動かせるよ');e.preventDefault();return}const p=pointerPos(e);snap();drag={id,dx:p.x-o.x,dy:p.y-o.y};canvas.setPointerCapture(e.pointerId);e.preventDefault()}else{selected=null;render()}});
-canvas.addEventListener('pointermove',e=>{if(!drag)return;const o=objects.find(x=>x.id===drag.id),p=pointerPos(e);if(!o)return;o.x=Math.max(0,Math.min(600,p.x-drag.dx));o.y=Math.max(0,Math.min(600,p.y-drag.dy));render()});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;const o=objects.find(x=>x.id===drag.id),p=pointerPos(e);if(!o)return;o.x=snapCoord(Math.max(0,Math.min(600,p.x-drag.dx)));o.y=snapCoord(Math.max(0,Math.min(600,p.y-drag.dy)));render()});
 canvas.addEventListener('pointerup',()=>{drag=null});canvas.addEventListener('pointercancel',()=>{drag=null});
 $('rotL').onclick=()=>change(o=>o.angle=(o.angle+345)%360);$('rotR').onclick=()=>change(o=>o.angle=(o.angle+15)%360);$('smaller').onclick=()=>change(o=>o.scale=Math.max(.25,+(o.scale-.1).toFixed(2)));$('larger').onclick=()=>change(o=>o.scale=Math.min(2.2,+(o.scale+.1).toFixed(2)));
 $('size').oninput=e=>{const o=chosen();if(!o)return;o.scale=+e.target.value/100;render()};$('size').onchange=()=>snap();$('angle').oninput=e=>{const o=chosen();if(!o)return;o.angle=+e.target.value;render()};$('angle').onchange=()=>snap();
@@ -67,6 +48,7 @@ $('back').onclick=()=>{if(!chosen())return;snap();const o=objects.splice(objects
 $('radial').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}snap();const cx=300,cy=300,base={...o};for(let i=1;i<8;i++){const a=i*Math.PI/4;objects.push({...base,id:String(Date.now()+Math.random()+i),x:cx+(o.x-cx)*Math.cos(a)-(o.y-cy)*Math.sin(a),y:cy+(o.x-cx)*Math.sin(a)+(o.y-cy)*Math.cos(a),angle:o.angle+i*45})}render();say('円形の模様をつくったよ')};
 $('repeat').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}snap();for(let i=1;i<4;i++)objects.push({...o,id:String(Date.now()+Math.random()+i),x:Math.min(560,o.x+i*75),y:o.y});render();say('横にならべたよ')};
 $('mirror').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}snap();objects.push({...o,id:String(Date.now()+Math.random()),x:600-o.x,y:o.y,angle:(360-o.angle)%360});selected=objects.at(-1).id;render();say('左右対称にコピーしたよ')};
+$('tile').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}if(objects.length>180){say('図形が多いので、少し減らしてから試してね');return}snap();const base={...o};const step=Math.max(42,68*base.scale);let added=0;for(let row=0,y=step/2;y<600;y+=step,row++){for(let x=step/2+(row%2?step/2:0);x<600;x+=step){if(Math.abs(x-base.x)<step*.25&&Math.abs(y-base.y)<step*.25)continue;objects.push({...base,id:String(Date.now()+Math.random()+added),x,y});added++}}selected=objects.at(-1)?.id||base.id;render();say('キャンバスに敷き詰めたよ')};
 $('clear').onclick=()=>{if(!objects.length)return;snap();objects=[];selected=null;render()};
 $('gridBtn').onclick=()=>{gridOn=true;render()};$('whiteBtn').onclick=()=>{gridOn=false;render()};
 $('undoBtn').onclick=()=>{if(!history.length)return;future.push(JSON.stringify({objects,selected,gridOn}));restore(history.pop())};$('redoBtn').onclick=()=>{if(!future.length)return;history.push(JSON.stringify({objects,selected,gridOn}));restore(future.pop())};
