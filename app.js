@@ -40,7 +40,7 @@ function makeCharacter(d,fill){
  if(d.style==='star')part('path',{d:'M-23 -24L-17 -39L-6 -29L0 -43L7 -29L19 -38L22 -22Z'});
  if(d.style==='cat')part('path',{d:'M-22 -22L-25 -42L-8 -30L8 -30L25 -42L22 -22Z'});
  if(d.style==='cape')part('path',{d:'M-18 5L-32 30L-25 39L0 28L25 39L32 30L18 5Z'});
- if(d.style==='bow'){part('path',{d:'M-7 -34Q-23 -47 -24 -31Q-23 -20 -7 -27Z'});part('path',{d:'M7 -34Q23 -47 24 -31Q23 -20 7 -27Z');part('circle',{cx:0,cy:-31,r:4})}
+ if(d.style==='bow'){part('path',{d:'M-7 -34Q-23 -47 -24 -31Q-23 -20 -7 -27Z'});part('path',{d:'M7 -34Q23 -47 24 -31Q23 -20 7 -27Z'});part('circle',{cx:0,cy:-31,r:4})}
  part('circle',{cx:-7,cy:-15,r:2.2},'#263238');part('circle',{cx:7,cy:-15,r:2.2},'#263238');
  part('path',{d:'M-4 -7Q0 -3 4 -7',fill:'none',stroke:'#263238','stroke-width':1.5},'none');
  return g
