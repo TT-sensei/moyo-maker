@@ -45,3 +45,40 @@ main{display:block;max-width:1500px;padding:10px clamp(8px,1.5vw,18px)}
 
 /* 複数選択とマイ模様 */
 .motif-library{display:grid;gap:6px;margin-top:10px}.motif-row{display:flex;gap:6px;align-items:stretch}.motif-row .motif-load{flex:1;text-align:left;overflow-wrap:anywhere}.motif-row .motif-delete{min-width:44px;font-size:20px;color:#8b3d35}.motif-library:empty{display:none}button:disabled{opacity:.45;cursor:not-allowed}
+
+
+/* タブレット以上では左右のパレットを常時表示し、中央の制作エリアを確保 */
+@media (min-width:760px){
+ main{
+  display:grid;
+  grid-template-columns:minmax(150px,.78fr) minmax(250px,1.5fr) minmax(170px,.9fr);
+  gap:8px;
+  align-items:start;
+  padding:10px;
+ }
+ .left,.right{
+  position:static;
+  inset:auto;
+  width:auto;
+  max-width:none;
+  max-height:none;
+  overflow:visible;
+  transform:none;
+  z-index:auto;
+  border-radius:15px;
+  box-shadow:none;
+  transition:none;
+ }
+ .drawer-backdrop{display:none!important}
+ .drawer-toggle{display:none}
+ .canvas-panel{width:100%;min-width:0}
+ .canvas-wrap svg{max-height:calc(100dvh - 210px)}
+ .right .pbody{display:block}
+ .shape-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .swatches{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .shape-btn{min-height:62px}
+ .shape-btn svg{width:30px;height:30px}
+ .control-grid button,.pattern-grid button{font-size:11px;padding:8px 3px}
+ .pbody{padding:9px}
+ .ptitle{padding:11px 10px 9px}
+}
