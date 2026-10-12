@@ -18,6 +18,12 @@ const colors=['#e76f51','#f4a261','#e9c46a','#8ab17d','#2a9d8f','#4d91bd','#5969
 let objects=[],selected=null,currentColor=colors[0],gridOn=true,snapOn=false,history=[],future=[],drag=null,toastTimer;
 const $=id=>document.getElementById(id),canvas=$('canvas');
 function say(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1800)}
+function closeDrawers(){['paletteDrawer','toolsDrawer'].forEach(id=>$(id).classList.remove('drawer-open'));$('drawerBackdrop').hidden=true;['paletteToggle','toolsToggle'].forEach(id=>$(id).setAttribute('aria-expanded','false'))}
+function openDrawer(which){const id=which==='palette'?'paletteDrawer':'toolsDrawer',other=which==='palette'?'toolsDrawer':'paletteDrawer';$(other).classList.remove('drawer-open');$(id).classList.add('drawer-open');$('drawerBackdrop').hidden=false;$('paletteToggle').setAttribute('aria-expanded',String(which==='palette'));$('toolsToggle').setAttribute('aria-expanded',String(which==='tools'))}
+$('paletteToggle').onclick=()=>{$('paletteDrawer').classList.contains('drawer-open')?closeDrawers():openDrawer('palette')};
+$('toolsToggle').onclick=()=>{$('toolsDrawer').classList.contains('drawer-open')?closeDrawers():openDrawer('tools')};
+$('drawerBackdrop').onclick=closeDrawers;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawers()});
 function snap(){history.push(JSON.stringify({objects,selected,gridOn}));if(history.length>60)history.shift();future=[]}
 function restore(s){const d=JSON.parse(s);objects=d.objects;selected=d.selected;gridOn=d.gridOn;render()}
 function makeSvgShape(d,fill){
@@ -48,9 +54,21 @@ $('back').onclick=()=>{if(!chosen())return;snap();const o=objects.splice(objects
 $('radial').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}snap();const cx=300,cy=300,base={...o};for(let i=1;i<8;i++){const a=i*Math.PI/4;objects.push({...base,id:String(Date.now()+Math.random()+i),x:cx+(o.x-cx)*Math.cos(a)-(o.y-cy)*Math.sin(a),y:cy+(o.x-cx)*Math.sin(a)+(o.y-cy)*Math.cos(a),angle:o.angle+i*45})}render();say('円形の模様をつくったよ')};
 $('repeat').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}snap();for(let i=1;i<4;i++)objects.push({...o,id:String(Date.now()+Math.random()+i),x:Math.min(560,o.x+i*75),y:o.y});render();say('横にならべたよ')};
 $('mirror').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}snap();objects.push({...o,id:String(Date.now()+Math.random()),x:600-o.x,y:o.y,angle:(360-o.angle)%360});selected=objects.at(-1).id;render();say('左右対称にコピーしたよ')};
-$('tile').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}if(objects.length>180){say('図形が多いので、少し減らしてから試してね');return}snap();const base={...o};const step=Math.max(42,68*base.scale);let added=0;for(let row=0,y=step/2;y<600;y+=step,row++){for(let x=step/2+(row%2?step/2:0);x<600;x+=step){if(Math.abs(x-base.x)<step*.25&&Math.abs(y-base.y)<step*.25)continue;objects.push({...base,id:String(Date.now()+Math.random()+added),x,y});added++}}selected=objects.at(-1)?.id||base.id;render();say('キャンバスに敷き詰めたよ')};
+$('tile').onclick=()=>{const o=chosen();if(!o||o.locked){if(o?.locked)say('ロックを解除してから使ってね');return}if(objects.length>180){say('図形が多いので、少し減らしてから試してね');return}snap();const base={...o};const added=[];
+const add=(x,y,angle=base.angle)=>{if(x < -45||x>645||y < -45||y>645||added.length+objects.length>240)return;added.push({...base,id:String(Date.now()+Math.random()+added.length),x,y,angle})};
+const s=base.scale;
+if(base.shape==='square'){const w=58*s;for(let y=w/2;y<600+w/2;y+=w)for(let x=w/2;x<600+w/2;x+=w)add(x,y)}
+else if(base.shape==='rect'){const w=78*s,h=48*s;for(let y=h/2;y<600+h/2;y+=h)for(let x=w/2;x<600+w/2;x+=w)add(x,y)}
+else if(base.shape==='tri'){const dx=36.4*s,dy=31.5*s;for(let row=-1,y=0;y<600+dy;row++,y+=dy)for(let col=-1,x=0;x<600+dx;col++,x+=dx)add(x,y,base.angle+(((row+col)%2+2)%2)*180)}
+else if(base.shape==='hex'){const dx=57*s,dy=64*s;for(let row=0,y=0;y<600+dy;row++,y+=dy)for(let x=(row%2?dx/2:0);x<600+dx;x+=dx)add(x,y)}
+else if(base.shape==='para'){const dx=60*s,dy=48*s;for(let row=0,y=dy/2;y<600+dy;row++,y+=dy)for(let x=(row%2? -16*s:0)+dx/2;x<600+dx;x+=dx)add(x,y)}
+else if(base.shape==='diamond'){const dx=58*s,dy=38*s;for(let row=0,y=0;y<600+dy;row++,y+=dy)for(let x=(row%2?dx/2:0);x<600+dx;x+=dx)add(x,y)}
+else {const step=Math.max(42,68*s);for(let row=0,y=step/2;y<600+step/2;row++,y+=step)for(let x=step/2+(row%2?step/2:0);x<600+step/2;x+=step)add(x,y)}
+objects.push(...added);selected=added.at(-1)?.id||base.id;render();say(['tri','square','rect','hex','para','diamond'].includes(base.shape)?'形の辺がつながるように敷き詰めたよ':'模様のように並べたよ（形によってはすき間ができるよ）')};
 $('clear').onclick=()=>{if(!objects.length)return;snap();objects=[];selected=null;render()};
 $('gridBtn').onclick=()=>{gridOn=true;render()};$('whiteBtn').onclick=()=>{gridOn=false;render()};
+$('clear').addEventListener('click',closeDrawers);
+$('paletteDrawer').addEventListener('click',e=>{if(e.target.closest('.shape-btn'))closeDrawers()});
 $('undoBtn').onclick=()=>{if(!history.length)return;future.push(JSON.stringify({objects,selected,gridOn}));restore(history.pop())};$('redoBtn').onclick=()=>{if(!future.length)return;history.push(JSON.stringify({objects,selected,gridOn}));restore(future.pop())};
 $('newBtn').onclick=()=>{if(objects.length&&!confirm('今の作品を消して、新しくつくりますか？'))return;snap();objects=[];selected=null;render()};
 $('saveBtn').onclick=()=>{const clone=canvas.cloneNode(true);clone.setAttribute('xmlns',NS);clone.classList.remove('grid-bg');clone.querySelectorAll('.selection').forEach(n=>n.remove());if(gridOn){const pattern=document.createElementNS(NS,'pattern');pattern.setAttribute('id','grid');pattern.setAttribute('width','30');pattern.setAttribute('height','30');pattern.setAttribute('patternUnits','userSpaceOnUse');const path=document.createElementNS(NS,'path');path.setAttribute('d','M 30 0 L 0 0 0 30');path.setAttribute('fill','none');path.setAttribute('stroke','#e2e6e1');path.setAttribute('stroke-width','.7');pattern.append(path);const defsEl=document.createElementNS(NS,'defs');defsEl.append(pattern);clone.prepend(defsEl);const rect=document.createElementNS(NS,'rect');rect.setAttribute('width','600');rect.setAttribute('height','600');rect.setAttribute('fill','url(#grid)');clone.insertBefore(rect,clone.children[1]||null)}const blob=new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='もよう工房-作品.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);say('作品を画像として保存したよ')};
