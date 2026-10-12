@@ -19,3 +19,26 @@ button{min-height:42px}
  .canvas-toolbar{gap:5px}
  .canvas-wrap svg{border-radius:4px}
 }
+
+/* Canvas-first layout: controls slide over the edges rather than shrinking the drawing area */
+main{display:block;max-width:1500px;padding:10px clamp(8px,1.5vw,18px)}
+.canvas-panel{width:100%;min-width:0}
+.canvas-wrap{padding:clamp(6px,1vw,12px)}
+.canvas-wrap svg{width:100%;max-height:calc(100dvh - 230px);aspect-ratio:1;object-fit:contain}
+.drawer-backdrop{position:fixed;inset:0;background:rgba(24,37,38,.26);z-index:19;backdrop-filter:blur(1px)}
+.drawer-backdrop[hidden]{display:none}
+.left,.right{position:fixed;top:0;bottom:0;width:min(330px,88vw);max-height:100dvh;overflow-y:auto;z-index:20;border-radius:0 15px 15px 0;box-shadow:0 12px 40px rgba(20,35,35,.18);transition:transform .24s ease;overscroll-behavior:contain}
+.left{left:0;transform:translateX(-105%)}
+.right{right:0;transform:translateX(105%);border-radius:15px 0 0 15px}
+.left.drawer-open,.right.drawer-open{transform:translateX(0)}
+.canvas-toolbar{position:sticky;top:0;z-index:4;background:var(--paper)}
+.drawer-toggle{background:var(--soft);border-color:#b7d7ce;color:#205a56}
+@media(max-width:640px){
+ main{padding:6px}
+ .canvas-toolbar{padding:7px;gap:5px}
+ .canvas-toolbar .tools{gap:4px}
+ .canvas-toolbar button{min-height:44px}
+ .canvas-wrap svg{max-height:calc(100dvh - 205px)}
+ .canvas-footer span:last-child{display:none}
+}
+@media(prefers-reduced-motion:reduce){.left,.right{transition:none}}
