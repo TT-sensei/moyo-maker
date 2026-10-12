@@ -48,7 +48,7 @@ main{display:block;max-width:1500px;padding:10px clamp(8px,1.5vw,18px)}
 
 
 /* タブレット以上では左右のパレットを常時表示し、中央の制作エリアを確保 */
-@media (min-width:760px){
+@media (min-width:960px){
  main{
   display:grid;
   grid-template-columns:minmax(150px,.78fr) minmax(250px,1.5fr) minmax(170px,.9fr);
