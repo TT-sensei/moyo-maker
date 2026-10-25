@@ -11,11 +11,17 @@ const HOME = {
   para:   { name: 'へいこうしへんけい', color: '#8c6bb1', pts: [[3,1],[4,0],[4,2],[3,3]] },
 };
 const ORDER = ['big1','big2','med','small1','small2','square','para'];
+const FULL_SOL = {};
+ORDER.forEach(id => { FULL_SOL[id] = HOME[id].pts; });
 const TOPICS = [
-  { id: 'square', label: 'しかく', moves: {} },
-  { id: 'house', label: 'おうち', moves: { para: [[0,0],[2,0],[3,-1],[1,-1]] } },
-  { id: 'pencil', label: 'えんぴつ', moves: { med: [[1,0],[3,0],[3,-2]] } },
-  { id: 'free', label: 'じゆう', moves: null },
+  { id: 'bigtri', label: 'おおきな さんかく', sol: { big1: [[0,0],[4,0],[2,2]], big2: [[0,0],[2,2],[0,4]] } },
+  { id: 'smallsq', label: 'ちいさな しかく', sol: { med: [[0,0],[2,0],[0,2]], small1: [[2,0],[2,2],[1,1]], small2: [[2,2],[0,2],[1,1]] } },
+  { id: 'fish', label: 'おさかな', sol: { big1: [[2,0],[2,4],[4,2]], med: [[2,0],[4,2],[4,0]], small1: [[2,1],[2,3],[1,2]] } },
+  { id: 'flower', label: 'おはな', sol: { square: [[0,1],[1,0],[2,1],[1,2]], small1: [[0,1],[1,0],[0,-1]], small2: [[1,0],[2,1],[3,0]], para: [[1,2],[2,1],[4,1],[3,2]] } },
+  { id: 'boat', label: 'ふね', sol: { big1: [[0,3],[4,3],[2,5]], big2: [[4,3],[2,5],[6,5]], med: [[3,1],[3,3],[1,3]], small1: [[3,1],[3,3],[4,2]] } },
+  { id: 'house', label: 'おうち', sol: { big1: [[0,2],[4,2],[2,0]], big2: [[0,2],[4,2],[2,4]], med: [[0,2],[0,4],[2,4]], small1: [[4,2],[4,4],[3,3]], small2: [[4,4],[2,4],[3,3]] } },
+  { id: 'square', label: 'しかく', sol: FULL_SOL },
+  { id: 'free', label: 'じゆう', sol: null },
 ];
 const START = { x: 188, y: 352 }; // where the assembled home square starts (px)
 const TARGET_CENTER = { x: 300, y: 182 };
@@ -48,14 +54,15 @@ function worldPts(id) {
   });
 }
 function solutionPolys(t) {
-  if (!t.moves) return null;
+  if (!t.sol) return null;
+  const ids = Object.keys(t.sol);
   const polys = {};
-  ORDER.forEach(id => { polys[id] = (t.moves[id] || HOME[id].pts).map(p => [p[0] * U, p[1] * U]); });
+  ids.forEach(id => { polys[id] = t.sol[id].map(p => [p[0] * U, p[1] * U]); });
   // center the whole silhouette on TARGET_CENTER
   let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
-  ORDER.forEach(id => polys[id].forEach(([x, y]) => { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }));
+  ids.forEach(id => polys[id].forEach(([x, y]) => { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }));
   const ox = TARGET_CENTER.x - (minX + maxX) / 2, oy = TARGET_CENTER.y - (minY + maxY) / 2;
-  ORDER.forEach(id => { polys[id] = polys[id].map(([x, y]) => [x + ox, y + oy]); });
+  ids.forEach(id => { polys[id] = polys[id].map(([x, y]) => [x + ox, y + oy]); });
   return polys;
 }
 function resetPieces() {
@@ -72,7 +79,7 @@ function setTopic(t) {
   resetPieces();
   document.querySelectorAll('.chip').forEach(ch => ch.classList.toggle('active', ch.dataset.id === t.id));
   bannerEl.classList.remove('show');
-  statusEl.textContent = t.moves ? 'グレーの形とぴったり同じ形をつくろう。' : '自由につくってみよう。';
+  statusEl.textContent = t.sol ? `グレーの形とぴったり同じ形をつくろう。つかうピースは ${Object.keys(t.sol).length} こだよ。` : '自由につくってみよう。';
   render();
 }
 function render() {
@@ -81,7 +88,7 @@ function render() {
   bg.setAttribute('width', '600'); bg.setAttribute('height', '600'); bg.setAttribute('fill', '#ffffff');
   svg.appendChild(bg);
   if (solution) {
-    ORDER.forEach(id => {
+    Object.keys(solution).forEach(id => {
       const poly = document.createElementNS(NS, 'polygon');
       poly.setAttribute('points', solution[id].map(p => p.join(',')).join(' '));
       poly.setAttribute('class', 'target');
@@ -112,7 +119,7 @@ function pointerPos(e) {
 }
 function snapTargets(excludeId) {
   const pts = [];
-  if (solution) ORDER.forEach(id => solution[id].forEach(p => pts.push(p)));
+  if (solution) Object.keys(solution).forEach(id => solution[id].forEach(p => pts.push(p)));
   ORDER.forEach(id => { if (id !== excludeId) worldPts(id).forEach(p => pts.push(p)); });
   return pts;
 }
@@ -137,10 +144,26 @@ function pointInPoly(x, y, poly) {
   }
   return inside;
 }
+function distToSeg(x, y, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const len2 = dx * dx + dy * dy;
+  let t = len2 ? ((x - x1) * dx + (y - y1) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy));
+}
+function distToPoly(x, y, poly) {
+  if (pointInPoly(x, y, poly)) return 0;
+  let d = 1e9;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    d = Math.min(d, distToSeg(x, y, poly[j][0], poly[j][1], poly[i][0], poly[i][1]));
+  }
+  return d;
+}
 function checkComplete() {
   if (!solution) return;
-  const targets = ORDER.map(id => solution[id]);
-  const currents = ORDER.map(id => worldPts(id));
+  const ids = Object.keys(solution);
+  const targets = ids.map(id => solution[id]);
+  const currents = ids.map(id => worldPts(id));
   let total = 0, covered = 0;
   for (let x = 4; x < 600; x += 8) {
     for (let y = 4; y < 600; y += 8) {
@@ -157,7 +180,7 @@ function checkComplete() {
       for (let y = Math.min(...ys); y <= Math.max(...ys); y += 8) {
         if (pointInPoly(x, y, poly)) {
           pTotal++;
-          if (!targets.some(t => pointInPoly(x, y, t))) pOut++;
+          if (!targets.some(t => distToPoly(x, y, t) <= 4)) pOut++;
         }
       }
     }
@@ -222,7 +245,7 @@ document.getElementById('flipBtn').onclick = () => {
 document.getElementById('resetBtn').onclick = () => { setTopic(topic); };
 document.getElementById('hintBtn').onclick = () => {
   if (!solution) return;
-  const id = ORDER.find(x => !pieceCorrect(x));
+  const id = Object.keys(solution).find(x => !pieceCorrect(x));
   if (!id) { statusEl.textContent = 'ぜんぶ合っているよ！'; return; }
   const poly = document.createElementNS(NS, 'polygon');
   poly.setAttribute('points', solution[id].map(p => p.join(',')).join(' '));
