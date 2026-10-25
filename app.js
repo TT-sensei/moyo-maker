@@ -41,7 +41,7 @@ function render(){canvas.querySelectorAll('.obj,.selection').forEach(n=>n.remove
 function change(fn){const o=chosen();if(!o||o.locked){if(o?.locked)say('ロック中だよ。解除してから編集してね');return}snap();fn(o);render()}
 $('lockBtn').onclick=()=>{const o=chosen();if(!o)return;snap();o.locked=!o.locked;render();say(o.locked?'ロックしたよ':'ロックを解除したよ')};
 $('snapBtn').onclick=()=>{snapOn=!snapOn;if(snapOn){objects.forEach(o=>{o.x=snapCoord(o.x);o.y=snapCoord(o.y)});say('30ピクセルごとにぴたっと配置するよ')}else say('自由に配置できるよ');render()};
-function pointerPos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*600/r.width,y:(e.clientY-r.top)*600/r.height}}
+function pointerPos(e){const pt=canvas.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(canvas.getScreenCTM().inverse());return{x:p.x,y:p.y}}
 canvas.addEventListener('pointerdown',e=>{const target=e.target.closest('.obj');if(target){const id=target.dataset.id;if(id!==selected){selected=id;render()}const o=chosen();if(o?.locked){say('ロック中だよ。解除すると動かせるよ');e.preventDefault();return}const p=pointerPos(e);snap();drag={id,dx:p.x-o.x,dy:p.y-o.y};canvas.setPointerCapture(e.pointerId);e.preventDefault()}else{selected=null;render()}});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;const o=objects.find(x=>x.id===drag.id),p=pointerPos(e);if(!o)return;o.x=snapCoord(Math.max(0,Math.min(600,p.x-drag.dx)));o.y=snapCoord(Math.max(0,Math.min(600,p.y-drag.dy)));render()});
 canvas.addEventListener('pointerup',()=>{drag=null});canvas.addEventListener('pointercancel',()=>{drag=null});
