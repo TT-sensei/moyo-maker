@@ -46,6 +46,44 @@ svg#canvas{display:block;width:100%;height:auto;aspect-ratio:1;background:#fff;b
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#263238;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:50;max-width:88vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 footer{padding:0 16px 18px;text-align:center;color:var(--muted);font-size:12px}
+/* ===== tablet layout: panels stay visible, board uses the screen ===== */
+@media (min-width:760px) and (min-height:520px){
+  html,body{height:100%}
+  body{display:grid;grid-template-rows:auto auto 1fr auto;grid-template-columns:1fr 308px;
+    grid-template-areas:"header header" "toolbar toolbar" "main palette" "main tools"}
+  header{grid-area:header}
+  .toolbar{grid-area:toolbar}
+  main{grid-area:main;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;max-width:none;padding:10px}
+  .board{height:min(100%,calc(100vw - 344px));aspect-ratio:1;width:auto}
+  #paletteDrawer{grid-area:palette;position:static;transform:none;width:auto;box-shadow:none;border-left:1px solid var(--line);min-height:0}
+  #toolsDrawer{grid-area:tools;position:static;transform:none;width:auto;box-shadow:none;border-left:1px solid var(--line);overflow-y:auto;min-height:0;max-height:46dvh}
+  #toolsDrawer .tool-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  #toolsDrawer h2{margin-bottom:2px}
+  #toolsDrawer h3{margin:8px 0 4px}
+  .drawer{padding:12px 14px}
+  #drawerBackdrop{display:none}
+  #paletteToggle,#toolsToggle{display:none}
+  .quickbar{display:none !important}
+  .status{display:none}
+  footer{display:none}
+}
+@media (min-width:760px) and (min-height:520px) and (orientation:portrait){
+  body{grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto auto;
+    grid-template-areas:"header" "toolbar" "main" "palette" "tools"}
+  .board{height:min(calc(100% - 42px),97vw);aspect-ratio:1;width:auto}
+  .status{display:block}
+  #paletteDrawer{border-left:none;max-height:178px;display:flex;gap:18px;align-items:flex-start;overflow-x:auto;overflow-y:hidden}
+  #paletteDrawer h2{display:none}
+  #paletteDrawer h3{margin-top:0;white-space:nowrap}
+  #paletteDrawer .shape-grid{display:flex;gap:8px}
+  #paletteDrawer .shape-btn{min-width:74px}
+  #paletteDrawer .swatches{max-width:210px}
+  #paletteDrawer p{display:none}
+  #toolsDrawer{border-left:none;display:flex;gap:10px;align-items:center;overflow-x:auto;overflow-y:hidden;padding:8px 14px;max-height:none}
+  #toolsDrawer h2,#toolsDrawer h3{display:none}
+  #toolsDrawer .tool-list{display:flex;flex-direction:row;flex-wrap:nowrap;gap:6px;margin:0}
+  #toolsDrawer .tool-list .btn{flex:none;white-space:nowrap;min-width:0}
+}
 </style></head><body>
 <header>
   <div class="brand">
@@ -91,6 +129,14 @@ footer{padding:0 16px 18px;text-align:center;color:var(--muted);font-size:12px}
 </aside>
 <aside class="drawer" id="toolsDrawer" aria-label="編集パネル">
   <h2>編集</h2>
+  <h3>選んだ図形の操作</h3>
+  <div class="tool-list">
+    <button class="btn" id="tRotL">↶ まわす</button>
+    <button class="btn" id="tRotR">↷ まわす</button>
+    <button class="btn" id="tDup">ふやす</button>
+    <button class="btn" id="tLock">🔒 ロック</button>
+    <button class="btn" id="tDel">けす</button>
+  </div>
   <div class="tool-list">
     <button class="btn" id="undoBtn">↩ もどす</button>
     <button class="btn" id="redoBtn">↪ やりなおす</button>

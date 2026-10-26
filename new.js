@@ -144,6 +144,7 @@ function render() {
   $('quickbar').classList.toggle('show', !!o);
   if (o) {
     $('qLock').textContent = o.locked ? '🔓 ロックを外す' : '🔒 ロック';
+    $('tLock').textContent = o.locked ? '🔓 ロックを外す' : '🔒 ロック';
     $('status').textContent = defOf(o).name + 'を えらんでいるよ。ドラッグで動かせるよ。';
   } else {
     $('status').textContent = objects.length ? 'ピースをタップすると、動かしたり回したりできるよ。' : '「図形・色」から、すきな図形をタップしてね。';
@@ -251,13 +252,20 @@ COLORS.forEach((c, i) => {
 /* ---------- buttons ---------- */
 $('qRotL').onclick = () => rotateSelected(-30);
 $('qRotR').onclick = () => rotateSelected(30);
-$('qDup').onclick = () => {
+$('tRotL').onclick = () => rotateSelected(-30);
+$('tRotR').onclick = () => rotateSelected(30);
+function duplicateSelected() {
   const o = chosen(); if (!o) return;
   const n = { ...o, id: uid(), x: o.x + 24, y: o.y + 24, locked: false };
   objects.push(n); selected = n.id; doSnap(n); render(); pushHistory();
-};
-$('qLock').onclick = () => { const o = chosen(); if (!o) return; o.locked = !o.locked; render(); say(o.locked ? 'ロックしたよ' : 'ロックを外したよ'); };
+}
+$('qDup').onclick = duplicateSelected;
+$('tDup').onclick = duplicateSelected;
+function toggleLock() { const o = chosen(); if (!o) return; o.locked = !o.locked; render(); say(o.locked ? 'ロックしたよ' : 'ロックを外したよ'); }
+$('qLock').onclick = toggleLock;
+$('tLock').onclick = toggleLock;
 $('qDel').onclick = deleteSelected;
+$('tDel').onclick = deleteSelected;
 $('undoBtn').onclick = () => { if (!history.length) return; future.push(snapshot()); restore(history.pop()); };
 $('redoBtn').onclick = () => { if (!future.length) return; history.push(snapshot()); restore(future.pop()); };
 $('mirrorBtn').onclick = () => {
