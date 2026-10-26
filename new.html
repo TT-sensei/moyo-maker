@@ -49,12 +49,17 @@ footer{padding:0 16px 18px;text-align:center;color:var(--muted);font-size:12px}
 /* ===== tablet layout: panels stay visible, board uses the screen ===== */
 @media (min-width:760px) and (min-height:520px){
   html,body{height:100%}
-  body{display:grid;grid-template-rows:auto auto 1fr auto;grid-template-columns:1fr 308px;
+  body{display:grid;grid-template-rows:auto auto 1fr auto;grid-template-columns:1fr 364px;
     grid-template-areas:"header header" "toolbar toolbar" "main palette" "main tools"}
+  header .btn,.toolbar .btn{padding:10px 16px;font-size:15px}
+  #paletteDrawer .shape-btn{font-size:13px;padding:10px 4px 8px}
+  #paletteDrawer .shape-btn svg{width:54px;height:54px}
+  #paletteDrawer .swatch{width:44px;height:44px}
+  #toolsDrawer .btn{padding:11px 10px;font-size:15px}
   header{grid-area:header}
   .toolbar{grid-area:toolbar}
   main{grid-area:main;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;max-width:none;padding:10px}
-  .board{height:min(100%,calc(100vw - 344px));aspect-ratio:1;width:auto}
+  .board{height:min(100%,calc(100vw - 396px));aspect-ratio:1;width:auto}
   #paletteDrawer{grid-area:palette;position:static;transform:none;width:auto;box-shadow:none;border-left:1px solid var(--line);min-height:0}
   #toolsDrawer{grid-area:tools;position:static;transform:none;width:auto;box-shadow:none;border-left:1px solid var(--line);overflow-y:auto;min-height:0;max-height:46dvh}
   #toolsDrawer .tool-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -72,11 +77,12 @@ footer{padding:0 16px 18px;text-align:center;color:var(--muted);font-size:12px}
     grid-template-areas:"header" "toolbar" "main" "palette" "tools"}
   .board{height:min(calc(100% - 42px),97vw);aspect-ratio:1;width:auto}
   .status{display:block}
-  #paletteDrawer{border-left:none;max-height:178px;display:flex;gap:18px;align-items:flex-start;overflow-x:auto;overflow-y:hidden}
+  #paletteDrawer{border-left:none;max-height:212px;display:flex;gap:18px;align-items:flex-start;overflow-x:auto;overflow-y:hidden}
   #paletteDrawer h2{display:none}
   #paletteDrawer h3{margin-top:0;white-space:nowrap}
   #paletteDrawer .shape-grid{display:flex;gap:8px}
-  #paletteDrawer .shape-btn{min-width:74px}
+  #paletteDrawer .shape-btn{min-width:94px}
+  #toolsDrawer .btn{padding:12px 16px}
   #paletteDrawer .swatches{max-width:210px}
   #paletteDrawer p{display:none}
   #toolsDrawer{border-left:none;display:flex;gap:10px;align-items:center;overflow-x:auto;overflow-y:hidden;padding:8px 14px;max-height:none}
