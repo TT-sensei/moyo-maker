@@ -26,7 +26,7 @@ const DEFS = [
 ];
 const COLORS = ['#e76f51','#f4a261','#e9c46a','#8ab17d','#2a9d8f','#4d91bd','#5969a8','#8c6bb1','#d979a5','#55463f','#202d35','#ffffff'];
 
-let objects = [], selected = null, pendingColor = null, gridOn = true;
+let objects = [], selected = null, pendingColor = null, gridOn = true, snapOn = true;
 let history = [], future = [], drag = null, toastTimer = null;
 
 const $ = id => document.getElementById(id);
@@ -71,6 +71,7 @@ const BOARD_POINTS = (() => {
   return pts;
 })();
 function doSnap(o) {
+  if (!snapOn) return false;
   const mine = worldVerts(o);
   // pieces first (flush with a neighbour beats the background grid)
   const pieceTargets = [];
@@ -114,9 +115,11 @@ function ensureDefs() {
   const pat = document.createElementNS(NS, 'pattern');
   pat.setAttribute('id', 'dots'); pat.setAttribute('width', E / 2); pat.setAttribute('height', H);
   pat.setAttribute('patternUnits', 'userSpaceOnUse');
+  // offset the tile so printed dots sit exactly on the snap lattice (anchored at board center 300,300)
+  pat.setAttribute('x', 300 % (E / 2)); pat.setAttribute('y', 300 % H);
   [[0,0],[E/2,0],[0,H],[E/2,H],[E/4,H/2]].forEach(([cx, cy]) => {
     const c = document.createElementNS(NS, 'circle');
-    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', 1.7); c.setAttribute('fill', '#d3dad4');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', 2); c.setAttribute('fill', '#bcc7bf');
     pat.appendChild(c);
   });
   defs.appendChild(pat); canvas.appendChild(defs);
@@ -273,6 +276,7 @@ $('radialBtn').onclick = () => {
 $('frontBtn').onclick = () => { const o = chosen(); if (!o) return; objects = objects.filter(x => x.id !== o.id); objects.push(o); render(); pushHistory(); };
 $('backBtn').onclick = () => { const o = chosen(); if (!o) return; objects = objects.filter(x => x.id !== o.id); objects.unshift(o); render(); pushHistory(); };
 $('gridBtn').onclick = () => { gridOn = !gridOn; $('gridBtn').textContent = gridOn ? '格子：ドット' : '格子：なし'; $('gridBtn').classList.toggle('active', gridOn); render(); };
+$('snapBtn').onclick = () => { snapOn = !snapOn; $('snapBtn').textContent = snapOn ? 'ぴたっと：ON' : 'ぴたっと：OFF'; say(snapOn ? 'ぴたっと吸着をオンにしたよ' : 'ぴたっと吸着をオフにしたよ。自由に置けるよ'); };
 $('clearBtn').onclick = () => { if (!objects.length) return; objects = []; selected = null; render(); pushHistory(); say('ぜんぶ消したよ'); closeDrawers(); };
 $('newBtn').onclick = () => { objects = []; selected = null; history = []; future = []; render(); refreshEditButtons(); say('新しく始めるよ'); };
 $('saveBtn').onclick = () => {
@@ -290,7 +294,8 @@ $('saveBtn').onclick = () => {
 };
 
 render(); refreshEditButtons();
-window.MOYO = { get objects() { return objects; }, addShape, worldVerts, doSnap, DEFS,
+window.MOYO = { get objects() { return objects; }, addShape, worldVerts, doSnap, DEFS, BOARD_POINTS,
+  get snapOn() { return snapOn; }, setSnap(v) { snapOn = v; },
   setObj(id, x, y, angle) { const o = objects.find(v => v.id === id); if (o) { o.x = x; o.y = y; o.angle = angle; render(); } },
   clear() { objects = []; selected = null; render(); } };
 })();
